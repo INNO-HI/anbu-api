@@ -1,0 +1,9 @@
+# 제안 스택 (무상 라이선스). SFR-001 서버 진단 결과·기존 대시보드 구성에 맞춰 조정.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+SQLAlchemy>=2.0
+PyMySQL>=1.1            # MariaDB 연결
+paho-mqtt>=2.0         # MQTT 구독형 전송
+cryptography>=42.0     # 매핑 테이블 암호화 / 비밀키 기반 토큰화
+pydantic-settings>=2.2
+python-dotenv>=1.0

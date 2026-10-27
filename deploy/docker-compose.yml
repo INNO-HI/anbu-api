@@ -1,0 +1,25 @@
+# 로컬 개발용 환경 (MariaDB + Mosquitto).
+# 운영은 본교 다향관 서버에서 수행하며 이 파일은 개발/검증용이다.
+services:
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: devroot
+      MARIADB_DATABASE: anbu_accum
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"   # 개발(평문)
+      - "8883:8883"   # 운영 지향(TLS) — certs/config 마운트 후 사용
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - mosquitto_data:/mosquitto/data
+
+volumes:
+  mariadb_data:
+  mosquitto_data:

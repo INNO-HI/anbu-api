@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# env & secrets (절대 커밋 금지: 비밀키·매핑 테이블·개인정보)
+.env
+*.key
+*.pem
+secrets/
+mapping/
+*.sqlite
+
+# data (개인정보/원본 데이터는 리포지토리에 포함하지 않음)
+data/
+*.csv
+*.dump
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
