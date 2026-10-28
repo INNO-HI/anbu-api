@@ -1,88 +1,88 @@
 # anbu-api
 
-**제주 안부똑똑 데이터 관리·전송 체계** — IoT 실증 데이터를 안전하게 누적·가명처리하여 참여 대학에 구독형으로 전송하고, 본교 실시간 대시보드에 연계하는 시스템.
+**제주 안부똑똑 데이터 관리·전송 체계** — IoT-LED 실증 데이터를 본교 서버에 누적 관리하고, 가명처리를 거쳐 참여 대학에 구독형(MQTT/TLS)으로 전송하며, 실시간 운영 대시보드로 확인하는 시스템.
 
 > 동국대학교 COSS사업단 발주 / 첨단분야(사물인터넷) 혁신융합대학(COSS) 사업
-> 과업지시서: [`docs/`](docs/) 참조 · 개발 계획: [`docs/개발계획서.md`](docs/개발계획서.md)
+> 과업지시서: [`docs/`](docs/) · 개발 계획: [`docs/개발계획서.md`](docs/개발계획서.md) · 운영: [`docs/운영매뉴얼.md`](docs/운영매뉴얼.md)
 
----
-
-## 한눈에 보기
-
-| 항목 | 내용 |
-|---|---|
-| 사업명 | 제주 안부똑똑 데이터 관리·전송 체계 구축 용역 |
-| 사업금액 | 13,200,000원 (부가세 포함) |
-| 사업기간 | 2026.10.19. ~ 2026.11.13. (약 4주) |
-| 계약방법 | 제한경쟁입찰 (협상에 의한 계약) |
-| 발주기관 | 동국대학교 COSS사업단 |
-| 운영 환경 | 본교 다향관 서버 (온프레미스) · MariaDB · 원시스템 31개 테이블 |
-
-## 목표 데이터 흐름
+## 데이터 흐름
 
 ```
-원시스템 수집 ──▶ 누적 DB(시계열) ──▶ 전송용 DB 분리 ──▶ 가명처리 ──┬─▶ ① 참여 대학 구독형 전송 (MQTT/TLS)
- (현장 돌봄 관리,                                                  └─▶ ② 본교 실시간 운영 대시보드
-  MariaDB)
+원시스템 수집 ──▶ 누적 DB(원본·시계열) ──▶ 전송용 DB(가명처리본 7테이블) ──┬─▶ 참여 대학 구독 전송 (MQTT/TLS)
+                 · 점등 구간 파생(SFR-002)   · 무작위 토큰 치환(SFR-004)      └─▶ 수신 확인 → 제공 실적 집계
+                 · 장비 상태 이력            · 암호화 매핑 분리 보관
+                 └─▶ 실시간 운영 대시보드(SFR-005) · 3단계 권한·화면 마스킹(SFR-007)
 ```
 
-- **원본은 본교 서버에 보존**, 외부 제공은 **가명처리본으로만** 한정합니다.
-- 개인정보가 포함된 데이터는 **본교 서버 밖으로 반출하지 않으며, 외부 클라우드 AI 서비스에 입력하지 않습니다.**
+- **원본은 본교 서버 보존**, 외부 제공은 **가명처리본만**. 직접식별자는 전송 스키마에 컬럼 자체가 없다.
+- DB 3개 물리 분리: 누적(accum) / 전송용(transfer) / 운영(ops: 암호화 매핑·이력·계정).
 
-## 과업 구성 (SFR)
+## SFR 구현 현황
 
-| ID | 과업명 | 구분 |
-|---|---|---|
-| SFR-001 | 서버 진단 | 필수 |
-| SFR-002 | 누적 DB 재구조화 | 필수 |
-| SFR-003 | 데이터 구조화 및 데이터 사전 작성 | 필수 |
-| SFR-004 | 전송용 DB 분리, 가명처리, 전송 암호화 | 필수 |
-| SFR-005 | 실시간 운영 대시보드 연계·확장 | 필수 |
-| SFR-006 | 구독형 데이터 전송 체계 구축 | 필수 |
-| SFR-007 | 권한 체계·화면 마스킹 | 필수 |
-| SFR-008 | 운영 이관 및 담당자 교육 | 필수 |
-| SFR-009 | 전력(AMI) 데이터 적재·통합 | 조건부 |
-| SFR-010 | 자유기술 항목 정밀 가명처리 | 선택 |
+| ID | 과업 | 구현 | 테스트 |
+|---|---|---|---|
+| SFR-001 | 서버 진단·증설 시점 산정 | [`diagnostics/`](src/anbu_api/diagnostics/) | ✅ |
+| SFR-002 | 누적 DB 재구조화(점등 구간·상태 이력·보존) | [`etl/`](src/anbu_api/etl/) | ✅ |
+| SFR-003 | 데이터 사전(테이블·필드·코드·결측 표준) | [`dictionary/`](src/anbu_api/dictionary/) | ✅ |
+| SFR-004 | 전송용 DB 분리·가명처리·전송 암호화 | [`pseudonym/`](src/anbu_api/pseudonym/) | ✅ |
+| SFR-005 | 실시간 운영 대시보드 연계·확장 | [`api/`](src/anbu_api/api/) + [대시보드](src/anbu_api/api/templates/dashboard.html) | ✅ |
+| SFR-006 | 구독형 전송(MQTT·구독 권한·전송 이력) | [`transport/`](src/anbu_api/transport/) | ✅ |
+| SFR-007 | 3단계 권한·화면 마스킹 | [`api/auth.py`](src/anbu_api/api/auth.py) · [`masking.py`](src/anbu_api/api/masking.py) | ✅ |
+| SFR-008 | 운영 이관·교육 | [`docs/운영매뉴얼.md`](docs/운영매뉴얼.md) | — |
+| SFR-009 | (조건부) 전력 AMI 2종 통합·계량기 가명처리 | [`ami/`](src/anbu_api/ami/) | ✅ |
+| SFR-010 | (선택) 자유기술 정밀 가명처리·재식별 시험·추가검수 | [`freetext/`](src/anbu_api/freetext/) | ✅ |
 
-각 SFR의 상세 구현 방안은 [개발계획서](docs/개발계획서.md)를, 데이터 모델·가명처리 기준은 [데이터 모델/흐름 문서](docs/data-model.md)를 참조하세요.
+## 빠른 시작 (로컬 개발)
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt && .venv/bin/pip install -e . --no-deps
+
+alias anbu=".venv/bin/python -m anbu_api.cli"
+anbu init-db                          # sqlite 3개 DB 생성(운영은 .env로 MariaDB 지정)
+anbu seed --subjects 6 --days 2       # 합성 데이터(개발 전용)
+anbu etl intervals && anbu etl status && anbu etl inactivity
+anbu ami-load                         # SFR-009
+anbu pseudo-run --include-memo        # SFR-004 (+SFR-010 메모 포함)
+anbu publish --dry-run                # SFR-006 (실발행은 브로커 기동 후 --dry-run 제거)
+anbu create-user --username admin --role super_admin
+anbu serve                            # http://127.0.0.1:8000/dashboard
+```
+
+테스트: `.venv/bin/python -m pytest` (41 tests)
+
+산출물 생성:
+```bash
+anbu diag --out build/서버진단보고서.md
+anbu dictionary --out-dir build
+anbu pseudo-run --record build/가명처리결과기록.md
+anbu freetext-test --out build/재식별시험결과서.md --review-sheet build/검수시트.csv --review-record build/추가검수기록.md
+anbu gen-acl --out deploy/mosquitto/config/acl
+.venv/bin/python db/generate_ddl.py   # 운영 MariaDB DDL → db/migrations/
+```
+
+MQTT 브로커(개발): `docker compose -f deploy/docker-compose.yml up -d`
 
 ## 리포지토리 구성
 
 ```
-anbu-api/
-├── README.md
-├── docs/                      # 과업지시서(hwp/pdf), 개발 계획, 데이터 모델
-│   ├── 개발계획서.md
-│   ├── data-model.md
-│   └── [과업지시서] ... .pdf / .hwp
-├── deploy/
-│   └── docker-compose.yml     # 로컬 개발용 MariaDB + Mosquitto(MQTT)
-├── src/anbu_api/              # 애플리케이션 스캐폴드(제안 스택: Python/FastAPI)
-│   ├── config.py
-│   ├── pseudonymize.py        # 비밀키 기반 가명식별자 치환(단순 해시 미사용)
-│   └── transport/mqtt_publisher.py
-├── .env.example
-├── requirements.txt
-└── .gitignore
+├── docs/                   # 과업지시서(hwp/pdf), 개발계획서, 데이터모델,
+│                           # 가명처리기준서·보존정책서·권한정의서·전송인터페이스정의서·운영매뉴얼
+├── db/
+│   ├── generate_ddl.py     # 모델 → MariaDB DDL
+│   └── migrations/         # 001 누적 / 002 전송용 / 003 운영 DDL
+├── deploy/                 # docker-compose(MariaDB+Mosquitto), mosquitto 설정
+├── src/anbu_api/
+│   ├── models/             # 누적·전송용·운영 3개 DB 모델(스키마 단일 원천)
+│   ├── etl/                # SFR-002 │ pseudonym/  SFR-004 │ transport/ SFR-006
+│   ├── diagnostics/        # SFR-001 │ dictionary/ SFR-003 │ ami/       SFR-009
+│   ├── freetext/           # SFR-010 │ api/        SFR-005/007
+│   ├── seed.py             # 합성 데이터(개발 전용) │ cli.py  운영 CLI
+└── tests/                  # 모듈별 41개 테스트(in-memory sqlite)
 ```
 
-> 스택(Python/FastAPI, Mosquitto)은 **제안 기준**이며, 본교 서버 진단(SFR-001) 결과와 기존 대시보드 구성에 맞춰 조정합니다. 무상 라이선스 도구 사용을 원칙으로 합니다.
-
-## 개발 환경 (로컬)
-
-```bash
-cp .env.example .env
-docker compose -f deploy/docker-compose.yml up -d   # MariaDB + Mosquitto
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-> 운영 배포는 본교 다향관 서버에서 수행하며, 원격 접속이 필요한 경우 발주기관이 승인한 VPN·지정 단말로만 접속하고 접속 기록을 남깁니다.
-
-## 보안·컴플라이언스 원칙
-
-- 「개인정보 보호법」 가명정보 처리 특례(과학적 연구 목적)에 따른 가명정보 형태를 원칙으로 함.
-- 가명처리 기준은 발주기관과 **서면 합의 후** 적용.
-- 원 식별자↔가명 식별자 **매핑 테이블은 암호화**하여 원본과 분리 보관, 발주기관 전용 권한으로 관리.
-- 전송 구간은 TLS 등으로 암호화.
-- 처리 기준: 「가명정보 처리 가이드라인」(개인정보보호위원회, 2026. 3.) 준용(SFR-010).
+## 보안·컴플라이언스 원칙(과업지시서 공통사항)
+- 개인정보 포함 데이터는 본교 서버 밖 반출·외부 클라우드 AI 입력 금지 — SFR-010도 서버 내 규칙 기반+사람 검수.
+- 가명 식별자는 무작위 토큰(단순 해시 미사용), 원 식별자는 Fernet 암호화 매핑으로 분리 보관, 재식별은 발주기관 전용(super_admin)+감사 로그.
+- 전송 구간 TLS, 구독 권한 ACL, 전송·수신 이력 전건 기록.
+- 원시스템 소스는 수정하지 않는다(읽기 전용 연계). 무상 라이선스 도구만 사용.

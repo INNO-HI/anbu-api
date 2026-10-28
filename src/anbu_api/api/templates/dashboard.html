@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>안부똑똑 운영 대시보드</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --surface: #ffffff; --border: #e2e5ea;
+    --ink: #1a202c; --ink-2: #4a5568; --ink-3: #a0aec0;
+    --accent: #2458c5; --accent-weak: #dbe6fb;
+    --ok: #1a7f37; --warn: #9a6700; --bad: #cf222e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c; --surface: #1d2127; --border: #30363d;
+      --ink: #e6e9ee; --ink-2: #aab2bf; --ink-3: #78818f;
+      --accent: #6ea8fe; --accent-weak: #1e3a66;
+      --ok: #3fb950; --warn: #d29922; --bad: #f85149;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 14px/1.6 "Apple SD Gothic Neo", "Pretendard", system-ui, sans-serif; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border);
+           padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 16px; margin: 0; }
+  header .sub { color: var(--ink-2); font-size: 12px; }
+  header .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 24px 48px; }
+  h2 { font-size: 14px; color: var(--ink-2); margin: 28px 0 10px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+          padding: 14px 16px; }
+  .tile .label { font-size: 12px; color: var(--ink-2); }
+  .tile .value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tile .meta { font-size: 11px; color: var(--ink-3); }
+  table { width: 100%; border-collapse: collapse; background: var(--surface);
+          border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border);
+           font-variant-numeric: tabular-nums; }
+  th { font-size: 12px; color: var(--ink-2); font-weight: 600; background: color-mix(in srgb, var(--surface) 92%, var(--border)); }
+  tr:last-child td { border-bottom: none; }
+  .num { text-align: right; }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; }
+  .chip.normal { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+  .chip.inactive { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); }
+  .chip.fault { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+  .bar-row { display: grid; grid-template-columns: 160px 1fr 90px; gap: 10px;
+             align-items: center; padding: 6px 0; }
+  .bar-track { background: var(--accent-weak); border-radius: 4px; height: 14px; }
+  .bar-fill { background: var(--accent); border-radius: 4px; height: 14px; min-width: 2px; }
+  .muted { color: var(--ink-3); }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+           padding: 8px 14px; font-size: 13px; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--ink-2); border: 1px solid var(--border); }
+  input { background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+          border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+  #login { max-width: 360px; margin: 10vh auto; background: var(--surface);
+           border: 1px solid var(--border); border-radius: 12px; padding: 28px; }
+  #login h2 { margin-top: 0; }
+  #login form { display: grid; gap: 10px; }
+  .error { color: var(--bad); font-size: 13px; min-height: 1em; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>제주 안부똑똑 운영 대시보드</h1>
+  <span class="sub">적재 · 센서 동작 · 전송 · 제공 실적 (SFR-005)</span>
+  <div class="right">
+    <span id="who" class="muted"></span>
+    <button id="refresh" class="ghost hidden">새로 고침</button>
+    <button id="logout" class="ghost hidden">로그아웃</button>
+  </div>
+</header>
+
+<div id="login">
+  <h2>로그인</h2>
+  <form id="login-form">
+    <input name="username" placeholder="아이디" autocomplete="username" required>
+    <input name="password" type="password" placeholder="비밀번호" autocomplete="current-password" required>
+    <button type="submit">접속</button>
+    <div class="error" id="login-error"></div>
+  </form>
+</div>
+
+<main id="app" class="hidden">
+  <h2>적재 현황</h2>
+  <div class="tiles" id="ingest-tiles"></div>
+  <h2>최근 작업 실행</h2>
+  <table id="runs"><thead><tr><th>작업</th><th>상태</th><th class="num">건수</th><th>시각</th></tr></thead><tbody></tbody></table>
+
+  <h2>센서 동작</h2>
+  <div class="tiles" id="sensor-tiles"></div>
+
+  <h2>전송 현황 (최근 발행)</h2>
+  <table id="transfers"><thead><tr><th>테이블</th><th>토픽</th><th class="num">건수</th><th>상태</th><th>발행 시각</th></tr></thead><tbody></tbody></table>
+
+  <h2>데이터 제공 실적 (참여 대학 구독 수신)</h2>
+  <div id="receipts" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;"></div>
+  <table id="receipts-table" style="margin-top:10px;"><thead><tr><th>참여 대학</th><th class="num">누적 수신 건수</th><th class="num">수신 확인 횟수</th><th>마지막 수신</th></tr></thead><tbody></tbody></table>
+</main>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+let token = sessionStorage.getItem("anbu_token");
+
+async function api(path) {
+  const res = await fetch(path, { headers: { Authorization: "Bearer " + token } });
+  if (res.status === 401) { logout(); throw new Error("세션 만료"); }
+  return res.json();
+}
+
+function logout() {
+  sessionStorage.removeItem("anbu_token");
+  token = null;
+  $("#app").classList.add("hidden");
+  $("#refresh").classList.add("hidden");
+  $("#logout").classList.add("hidden");
+  $("#login").classList.remove("hidden");
+  $("#who").textContent = "";
+}
+
+function tile(label, value, meta) {
+  return `<div class="tile"><div class="label">${label}</div>` +
+         `<div class="value">${value}</div><div class="meta">${meta || ""}</div></div>`;
+}
+
+async function render() {
+  const [ingest, sensors, transfers, receipts] = await Promise.all([
+    api("/api/dashboard/ingest"), api("/api/dashboard/sensors"),
+    api("/api/dashboard/transfers"), api("/api/dashboard/receipts"),
+  ]);
+
+  const t = ingest.tables;
+  $("#ingest-tiles").innerHTML =
+    tile("대상자", (t.subjects ?? 0).toLocaleString()) +
+    tile("LED 원시 로그", (t.led_raw_logs ?? 0).toLocaleString(), "보존 정책 적용 대상") +
+    tile("점등 구간(파생)", (t.lighting_intervals ?? 0).toLocaleString()) +
+    tile("장비 상태 이력", (t.device_status_history ?? 0).toLocaleString()) +
+    tile("돌봄 기록", (t.care_records ?? 0).toLocaleString()) +
+    tile("전력(AMI) 정본", (t.power_usage ?? 0).toLocaleString(), "SFR-009");
+
+  $("#runs tbody").innerHTML = ingest.recent_runs.map(r =>
+    `<tr><td>${r.job}</td><td>${r.status}</td><td class="num">${r.row_count.toLocaleString()}</td><td class="muted">${r.started_at ?? ""}</td></tr>`
+  ).join("") || `<tr><td colspan="4" class="muted">기록 없음</td></tr>`;
+
+  const ds = sensors.device_status;
+  $("#sensor-tiles").innerHTML =
+    tile("정상 장비", `<span class="chip normal">${ds.normal ?? 0}</span>`) +
+    tile("비활성 장비", `<span class="chip inactive">${ds.inactive ?? 0}</span>`, "무신호 추론 포함") +
+    tile("장애 장비", `<span class="chip fault">${ds.fault ?? 0}</span>`) +
+    tile("오늘 점등 구간", sensors.intervals_today.toLocaleString(),
+         "마지막 점등 " + (sensors.last_interval_at ?? "없음"));
+
+  $("#transfers tbody").innerHTML = transfers.recent.map(r =>
+    `<tr><td>${r.table}</td><td class="muted">${r.topic}</td><td class="num">${r.record_count.toLocaleString()}</td><td>${r.status}</td><td class="muted">${r.published_at ?? ""}</td></tr>`
+  ).join("") || `<tr><td colspan="5" class="muted">발행 이력 없음</td></tr>`;
+
+  const unis = receipts.universities;
+  const max = Math.max(1, ...unis.map(u => u.total_records));
+  $("#receipts").innerHTML = unis.length
+    ? unis.map(u =>
+        `<div class="bar-row"><span>${u.university}</span>` +
+        `<div class="bar-track"><div class="bar-fill" style="width:${Math.round(u.total_records / max * 100)}%"></div></div>` +
+        `<span class="num">${u.total_records.toLocaleString()}건</span></div>`
+      ).join("")
+    : `<span class="muted">수신 실적 없음</span>`;
+  $("#receipts-table tbody").innerHTML = unis.map(u =>
+    `<tr><td>${u.university}</td><td class="num">${u.total_records.toLocaleString()}</td><td class="num">${u.receipt_count}</td><td class="muted">${u.last_received_at ?? ""}</td></tr>`
+  ).join("") || `<tr><td colspan="4" class="muted">기록 없음</td></tr>`;
+}
+
+async function enter() {
+  $("#login").classList.add("hidden");
+  $("#app").classList.remove("hidden");
+  $("#refresh").classList.remove("hidden");
+  $("#logout").classList.remove("hidden");
+  await render();
+}
+
+$("#login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const res = await fetch("/api/token", { method: "POST", body: new URLSearchParams(form) });
+  if (!res.ok) { $("#login-error").textContent = "로그인 실패 — 아이디/비밀번호 확인"; return; }
+  const data = await res.json();
+  token = data.access_token;
+  sessionStorage.setItem("anbu_token", token);
+  $("#who").textContent = form.get("username") + " (" + data.role + ")";
+  enter();
+});
+$("#logout").addEventListener("click", logout);
+$("#refresh").addEventListener("click", render);
+if (token) enter();
+</script>
+</body>
+</html>

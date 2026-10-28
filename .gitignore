@@ -15,8 +15,11 @@ mapping/
 
 # data (개인정보/원본 데이터는 리포지토리에 포함하지 않음)
 data/
+build/
+*.db
 *.csv
 *.dump
+received.jsonl
 
 # OS/editor
 .DS_Store
