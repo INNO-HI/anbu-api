@@ -106,6 +106,27 @@ def test_infer_inactivity_marks_silent_device(seeded_accum):
     assert len(hist) == changed
 
 
+def test_subject_overview_view(seeded_accum):
+    """대상자 단위 통합 조회 뷰(SFR-002): 대상자 1행으로 장비·점등·알림·돌봄이 모인다."""
+    from sqlalchemy import text
+
+    from anbu_api.etl.views import VIEW_NAME, create_views
+
+    build_intervals(seeded_accum, as_of=AS_OF)
+    create_views(seeded_accum)
+
+    rows = seeded_accum.execute(
+        text(f"SELECT * FROM {VIEW_NAME} ORDER BY subject_id")
+    ).mappings().all()
+    assert len(rows) == 4
+    first = rows[0]
+    assert first["device_count"] >= 1
+    assert first["last_lighting_at"] is not None   # 점등 이력 연계
+    assert first["care_record_count"] == 2
+    # 시드: subject 3(i=2)은 미해결 DEVICE_FAULT 알림 보유
+    assert rows[2]["open_alert_count"] == 1
+
+
 def test_retention_purges_old_raw_logs(seeded_accum):
     """보존 기간이 지난 원시 로그만 파기된다."""
     total_before = seeded_accum.scalar(select(func.count()).select_from(LedRawLog))

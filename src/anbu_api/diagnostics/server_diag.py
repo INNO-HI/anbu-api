@@ -21,6 +21,48 @@ from anbu_api.timeutil import iso_kst, now_kst
 # 원시 로그 1행의 추정 저장 비용(행 + 인덱스), 보수적으로 산정
 RAW_LOG_ROW_BYTES = 80
 
+# 과업지시서(2026.10 개정) 기준치: 센서 162개 기준 일평균 약 4.6만 행
+DAILY_ROWS_FALLBACK = 46_000
+
+# 과업지시서 '현행 환경'에 명시된 다향관 서버 사양 — 진단 시 측정치와 대조한다
+EXPECTED_SPEC = {
+    "server_model": "HPE ProLiant DL360 Gen11 (1U 랙 서버)",
+    "cpu": "Intel Xeon Silver 4410Y (12코어/24스레드, 2.0GHz)",
+    "cpu_cores_logical": 24,
+    "memory_gb": 128,  # 현재 64GB 장착, 128GB로 보완 예정
+    "gpu": "NVIDIA A2 16GB",
+    "storage": "메인 960GB SSD + 별도 저장 디스크 9.1TB",
+}
+
+
+def spec_check(diag: dict) -> list[dict]:
+    """측정치를 과업지시서 기준 사양과 대조한다(서버 진단 보고서 수록용)."""
+    hw = diag["hardware"]
+    mem_ok = hw["memory_total_gb"] >= EXPECTED_SPEC["memory_gb"] * 0.9
+    return [
+        {
+            "항목": "CPU 논리 코어",
+            "기준": EXPECTED_SPEC["cpu_cores_logical"],
+            "측정": hw["cpu_cores_logical"],
+            "적합": hw["cpu_cores_logical"] >= EXPECTED_SPEC["cpu_cores_logical"],
+            "비고": EXPECTED_SPEC["cpu"],
+        },
+        {
+            "항목": "메모리(GB)",
+            "기준": EXPECTED_SPEC["memory_gb"],
+            "측정": hw["memory_total_gb"],
+            "적합": mem_ok,
+            "비고": "현재 64GB 장착·128GB 보완 예정(과업지시서) — 64GB 측정 시 보완 이행 확인 필요",
+        },
+        {
+            "항목": "GPU",
+            "기준": EXPECTED_SPEC["gpu"],
+            "측정": hw["gpu"],
+            "적합": "A2" in hw["gpu"].upper(),
+            "비고": "로컬 LLM 구동 가능성 판단 근거(SFR-010 채택 시)",
+        },
+    ]
+
 
 def _detect_gpu() -> str:
     """GPU 존재 여부 탐지(nvidia-smi → macOS system_profiler 순). 실패 시 '미탐지'."""
@@ -68,7 +110,7 @@ def estimate_growth(accum_session: Session, free_bytes: int) -> dict:
         span_days = max((last - first).total_seconds() / 86400, 1.0)
         daily_rows = total_rows / span_days
     else:
-        daily_rows = 40_000  # 과업지시서 기준치(2026.6, 센서 58개): 일평균 약 4만 행
+        daily_rows = DAILY_ROWS_FALLBACK
 
     daily_bytes = daily_rows * RAW_LOG_ROW_BYTES
     days_until_full = int(free_bytes / daily_bytes) if daily_bytes else None
@@ -132,10 +174,11 @@ def run_diagnostics(accum_session: Session | None = None, *, data_dir: str = "."
         diag["growth"] = estimate_growth(accum_session, disk.free)
     else:
         diag["growth"] = {
-            "daily_rows_estimate": 40_000,
-            "daily_mb_estimate": round(40_000 * RAW_LOG_ROW_BYTES / 1_048_576, 2),
-            "note": "DB 미연결 — 과업지시서 기준치 사용",
+            "daily_rows_estimate": DAILY_ROWS_FALLBACK,
+            "daily_mb_estimate": round(DAILY_ROWS_FALLBACK * RAW_LOG_ROW_BYTES / 1_048_576, 2),
+            "note": "DB 미연결 — 과업지시서 기준치(센서 162개, 일 4.6만 행) 사용",
         }
+    diag["spec_check"] = spec_check(diag)
     return diag
 
 
@@ -153,6 +196,20 @@ def write_report(diag: dict, out_path: str) -> str:
         f"- 메모리: 총 {hw['memory_total_gb']} GB / 가용 {hw['memory_available_gb']} GB",
         f"- GPU: {hw['gpu']}",
         "",
+    ]
+    if diag.get("spec_check"):
+        lines += [
+            "### 과업지시서 기준 사양 대조",
+            "",
+            "| 항목 | 기준 | 측정 | 적합 | 비고 |",
+            "|---|---|---|---|---|",
+        ]
+        lines += [
+            f"| {c['항목']} | {c['기준']} | {c['측정']} | {'적합' if c['적합'] else '**불일치**'} | {c['비고']} |"
+            for c in diag["spec_check"]
+        ]
+        lines.append("")
+    lines += [
         "## 2. 운영체제",
         f"- 플랫폼: {os_['platform']}",
         f"- Python: {os_['python']}",

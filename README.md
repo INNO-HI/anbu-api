@@ -3,7 +3,9 @@
 **제주 안부똑똑 데이터 관리·전송 체계** — IoT-LED 실증 데이터를 본교 서버에 누적 관리하고, 가명처리를 거쳐 참여 대학에 구독형(MQTT/TLS)으로 전송하며, 실시간 운영 대시보드로 확인하는 시스템.
 
 > 동국대학교 COSS사업단 발주 / 첨단분야(사물인터넷) 혁신융합대학(COSS) 사업
-> 과업지시서: [`docs/`](docs/) · 개발 계획: [`docs/개발계획서.md`](docs/개발계획서.md) · 운영: [`docs/운영매뉴얼.md`](docs/운영매뉴얼.md)
+> 과업지시서(2026.10 개정): [`docs/1. 과업지시서_….pdf`](docs/) · 개발 계획: [`docs/개발계획서.md`](docs/개발계획서.md) · 운영: [`docs/운영매뉴얼.md`](docs/운영매뉴얼.md)
+>
+> 운영 환경(개정판 명시): HPE DL360 Gen11 · Xeon 4410Y(12C/24T) · 128GB · NVIDIA A2 16GB · MariaDB 10.11 · 센서 162개(일 4.6만 행) · 대상자 78명
 
 ## 데이터 흐름
 
@@ -30,7 +32,7 @@
 | SFR-007 | 3단계 권한·화면 마스킹 | [`api/auth.py`](src/anbu_api/api/auth.py) · [`masking.py`](src/anbu_api/api/masking.py) | ✅ |
 | SFR-008 | 운영 이관·교육 | [`docs/운영매뉴얼.md`](docs/운영매뉴얼.md) | — |
 | SFR-009 | (조건부) 전력 AMI 2종 통합·계량기 가명처리 | [`ami/`](src/anbu_api/ami/) | ✅ |
-| SFR-010 | (선택) 자유기술 정밀 가명처리·재식별 시험·추가검수 | [`freetext/`](src/anbu_api/freetext/) | ✅ |
+| SFR-010 | (채택 시) 자유기술 정밀 가명처리·재식별 시험·추가검수 — 개정판에서 과업 구성 제외, 채택 대비 구현 유지(기본 비활성) | [`freetext/`](src/anbu_api/freetext/) | ✅ |
 
 ## 빠른 시작 (로컬 개발)
 

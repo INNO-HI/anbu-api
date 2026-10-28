@@ -17,12 +17,22 @@ def test_run_diagnostics_keys(seeded_accum):
     assert g["days_until_full"] is None or g["days_until_full"] > 0
 
 
+def test_spec_check_against_rfp(seeded_accum):
+    """측정치가 과업지시서 명시 사양(HPE DL360 Gen11 등)과 대조된다."""
+    diag = run_diagnostics(seeded_accum, data_dir=".")
+    checks = diag["spec_check"]
+    items = {c["항목"] for c in checks}
+    assert {"CPU 논리 코어", "메모리(GB)", "GPU"} <= items
+    assert all(isinstance(c["적합"], bool) for c in checks)
+
+
 def test_write_diag_report(seeded_accum, tmp_path):
     diag = run_diagnostics(seeded_accum, data_dir=".")
     path = write_report(diag, str(tmp_path / "서버진단보고서.md"))
     content = open(path, encoding="utf-8").read()
     assert "서버 진단 보고서" in content
     assert "증설" in content
+    assert "과업지시서 기준 사양 대조" in content
 
 
 def test_generate_dictionary(seeded_accum, tmp_path):

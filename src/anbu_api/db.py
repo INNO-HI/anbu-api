@@ -81,6 +81,10 @@ def init_db(names: tuple[DbName, ...] = ("accum", "transfer", "ops")) -> None:
 
     for name in names:
         BASES[name].metadata.create_all(get_engine(name))
+    if "accum" in names:
+        from anbu_api.etl.views import create_views  # 대상자 단위 통합 조회(SFR-002)
+
+        create_views(get_engine("accum"))
 
 
 def make_session(engine: Engine) -> Session:

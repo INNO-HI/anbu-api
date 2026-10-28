@@ -35,11 +35,20 @@ def main() -> None:
         ]
         for table in BASES[db_name].metadata.sorted_tables:
             ddl = str(CreateTable(table).compile(dialect=dialect)).strip()
-            # MariaDB 기본: InnoDB + utf8mb4
+            # MariaDB(10.11) 기본: InnoDB + utf8mb4
             lines.append(f"{ddl} ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
             for index in table.indexes:
                 lines.append(str(CreateIndex(index).compile(dialect=dialect)).strip() + ";")
             lines.append("")
+        if db_name == "accum":
+            from anbu_api.etl.views import VIEW_NAME, VIEW_SELECT
+
+            lines += [
+                "-- 대상자 단위 통합 조회 뷰 (SFR-002)",
+                f"DROP VIEW IF EXISTS {VIEW_NAME};",
+                f"CREATE VIEW {VIEW_NAME} AS {VIEW_SELECT};",
+                "",
+            ]
         path = os.path.join(out_dir, filename)
         with open(path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))

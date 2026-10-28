@@ -133,3 +133,22 @@ CREATE TABLE lighting_intervals (
 	FOREIGN KEY(device_id) REFERENCES devices (device_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE INDEX ix_interval_device_time ON lighting_intervals (device_id, started_at);
+
+-- 대상자 단위 통합 조회 뷰 (SFR-002)
+DROP VIEW IF EXISTS v_subject_overview;
+CREATE VIEW v_subject_overview AS SELECT s.subject_id,
+       s.region_emd,
+       s.gender,
+       s.high_risk_yn,
+       (SELECT COUNT(*) FROM devices d
+         WHERE d.subject_id = s.subject_id)                       AS device_count,
+       (SELECT MAX(li.ended_at)
+          FROM lighting_intervals li
+          JOIN devices d2 ON li.device_id = d2.device_id
+         WHERE d2.subject_id = s.subject_id)                      AS last_lighting_at,
+       (SELECT COUNT(*) FROM alerts a
+         WHERE a.subject_id = s.subject_id
+           AND a.resolved_at IS NULL)                             AS open_alert_count,
+       (SELECT COUNT(*) FROM care_records c
+         WHERE c.subject_id = s.subject_id)                       AS care_record_count
+  FROM subjects s;
