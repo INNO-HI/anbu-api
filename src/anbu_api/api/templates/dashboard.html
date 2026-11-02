@@ -10,6 +10,7 @@
     --ink: #1a202c; --ink-2: #4a5568; --ink-3: #a0aec0;
     --accent: #2458c5; --accent-weak: #dbe6fb;
     --ok: #1a7f37; --warn: #9a6700; --bad: #cf222e;
+    --code-bg: #f0f2f5;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -17,18 +18,24 @@
       --ink: #e6e9ee; --ink-2: #aab2bf; --ink-3: #78818f;
       --accent: #6ea8fe; --accent-weak: #1e3a66;
       --ok: #3fb950; --warn: #d29922; --bad: #f85149;
+      --code-bg: #11151a;
     }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink);
          font: 14px/1.6 "Apple SD Gothic Neo", "Pretendard", system-ui, sans-serif; }
   header { background: var(--surface); border-bottom: 1px solid var(--border);
-           padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
+           padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   header h1 { font-size: 16px; margin: 0; }
   header .sub { color: var(--ink-2); font-size: 12px; }
   header .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  nav.tabs { display: flex; gap: 4px; }
+  nav.tabs button { background: transparent; color: var(--ink-2); border: 1px solid transparent;
+                    border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  nav.tabs button.active { background: var(--accent-weak); color: var(--accent); }
   main { max-width: 1100px; margin: 0 auto; padding: 20px 24px 48px; }
   h2 { font-size: 14px; color: var(--ink-2); margin: 28px 0 10px; }
+  h2:first-child { margin-top: 0; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
   .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
           padding: 14px 16px; }
@@ -38,7 +45,7 @@
   table { width: 100%; border-collapse: collapse; background: var(--surface);
           border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
   th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border);
-           font-variant-numeric: tabular-nums; }
+           font-variant-numeric: tabular-nums; vertical-align: top; }
   th { font-size: 12px; color: var(--ink-2); font-weight: 600; background: color-mix(in srgb, var(--surface) 92%, var(--border)); }
   tr:last-child td { border-bottom: none; }
   .num { text-align: right; }
@@ -51,23 +58,53 @@
   .bar-track { background: var(--accent-weak); border-radius: 4px; height: 14px; }
   .bar-fill { background: var(--accent); border-radius: 4px; height: 14px; min-width: 2px; }
   .muted { color: var(--ink-3); }
-  button { background: var(--accent); color: #fff; border: 0; border-radius: 8px;
-           padding: 8px 14px; font-size: 13px; cursor: pointer; }
-  button.ghost { background: transparent; color: var(--ink-2); border: 1px solid var(--border); }
+  button.act { background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+               padding: 8px 14px; font-size: 13px; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--ink-2); border: 1px solid var(--border);
+                 border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
   input { background: var(--surface); color: var(--ink); border: 1px solid var(--border);
           border-radius: 8px; padding: 8px 10px; font-size: 13px; }
-  #login { max-width: 360px; margin: 10vh auto; background: var(--surface);
+  #login { max-width: 360px; margin: 8vh auto; background: var(--surface);
            border: 1px solid var(--border); border-radius: 12px; padding: 28px; }
   #login h2 { margin-top: 0; }
   #login form { display: grid; gap: 10px; }
   .error { color: var(--bad); font-size: 13px; min-height: 1em; }
   .hidden { display: none; }
+
+  /* 이용안내 */
+  .guide { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+           padding: 8px 28px 28px; }
+  .guide h2 { font-size: 20px; color: var(--ink); margin: 28px 0 8px; }
+  .guide h3 { font-size: 15px; color: var(--ink); margin: 22px 0 6px; }
+  .guide p, .guide li { color: var(--ink-2); }
+  .guide ol, .guide ul { padding-left: 20px; margin: 6px 0; }
+  .guide li { margin: 4px 0; }
+  .guide .lead { font-size: 15px; color: var(--ink); }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+  .flow .node { background: var(--accent-weak); color: var(--accent); border-radius: 8px;
+                padding: 8px 12px; font-size: 13px; font-weight: 600; }
+  .flow .arrow { color: var(--ink-3); font-weight: 700; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+        padding: 12px 14px; overflow-x: auto; font: 12.5px/1.6 "SFMono-Regular", Menlo, Consolas, monospace;
+        color: var(--ink); }
+  code.inline { background: var(--code-bg); border: 1px solid var(--border); border-radius: 5px;
+                padding: 1px 6px; font: 12.5px "SFMono-Regular", Menlo, Consolas, monospace; }
+  .callout { border-left: 3px solid var(--accent); background: var(--accent-weak);
+             border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 12px 0; font-size: 13px; color: var(--ink); }
+  .callout.warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+  .step { display: grid; grid-template-columns: 28px 1fr; gap: 12px; margin: 14px 0; }
+  .step .n { width: 28px; height: 28px; border-radius: 999px; background: var(--accent); color: #fff;
+             display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  .step .t strong { color: var(--ink); }
 </style>
 </head>
 <body>
 <header>
-  <h1>제주 안부똑똑 운영 대시보드</h1>
-  <span class="sub">적재 · 센서 동작 · 전송 · 제공 실적 (SFR-005)</span>
+  <h1>제주 안부똑똑</h1>
+  <nav class="tabs">
+    <button id="tab-ops-btn" class="active" data-view="ops">운영 현황</button>
+    <button id="tab-guide-btn" data-view="guide">이용안내</button>
+  </nav>
   <div class="right">
     <span id="who" class="muted"></span>
     <button id="refresh" class="ghost hidden">새로 고침</button>
@@ -75,37 +112,132 @@
   </div>
 </header>
 
-<div id="login">
-  <h2>로그인</h2>
-  <form id="login-form">
-    <input name="username" placeholder="아이디" autocomplete="username" required>
-    <input name="password" type="password" placeholder="비밀번호" autocomplete="current-password" required>
-    <button type="submit">접속</button>
-    <div class="error" id="login-error"></div>
-  </form>
-</div>
+<main>
+<!-- ===================== 운영 현황 ===================== -->
+<section id="view-ops">
+  <div id="login">
+    <h2>로그인</h2>
+    <form id="login-form">
+      <input name="username" placeholder="아이디" autocomplete="username" required>
+      <input name="password" type="password" placeholder="비밀번호" autocomplete="current-password" required>
+      <button type="submit" class="act">접속</button>
+      <div class="error" id="login-error"></div>
+    </form>
+  </div>
 
-<main id="app" class="hidden">
-  <h2>적재 현황</h2>
-  <div class="tiles" id="ingest-tiles"></div>
-  <h2>최근 작업 실행</h2>
-  <table id="runs"><thead><tr><th>작업</th><th>상태</th><th class="num">건수</th><th>시각</th></tr></thead><tbody></tbody></table>
+  <div id="app" class="hidden">
+    <h2>적재 현황</h2>
+    <div class="tiles" id="ingest-tiles"></div>
+    <h2>최근 작업 실행</h2>
+    <table id="runs"><thead><tr><th>작업</th><th>상태</th><th class="num">건수</th><th>시각</th></tr></thead><tbody></tbody></table>
 
-  <h2>센서 동작</h2>
-  <div class="tiles" id="sensor-tiles"></div>
+    <h2>센서 동작</h2>
+    <div class="tiles" id="sensor-tiles"></div>
 
-  <h2>전송 현황 (최근 발행)</h2>
-  <table id="transfers"><thead><tr><th>테이블</th><th>토픽</th><th class="num">건수</th><th>상태</th><th>발행 시각</th></tr></thead><tbody></tbody></table>
+    <h2>전송 현황 (최근 발행)</h2>
+    <table id="transfers"><thead><tr><th>테이블</th><th>토픽</th><th class="num">건수</th><th>상태</th><th>발행 시각</th></tr></thead><tbody></tbody></table>
 
-  <h2>데이터 제공 실적 (참여 대학 구독 수신)</h2>
-  <div id="receipts" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;"></div>
-  <table id="receipts-table" style="margin-top:10px;"><thead><tr><th>참여 대학</th><th class="num">누적 수신 건수</th><th class="num">수신 확인 횟수</th><th>마지막 수신</th></tr></thead><tbody></tbody></table>
+    <h2>데이터 제공 실적 (참여 대학 구독 수신)</h2>
+    <div id="receipts" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;"></div>
+    <table id="receipts-table" style="margin-top:10px;"><thead><tr><th>참여 대학</th><th class="num">누적 수신 건수</th><th class="num">수신 확인 횟수</th><th>마지막 수신</th></tr></thead><tbody></tbody></table>
+  </div>
+</section>
+
+<!-- ===================== 이용안내 ===================== -->
+<section id="view-guide" class="hidden">
+  <div class="guide">
+    <h2>참여 대학 데이터 구독·수신 이용안내</h2>
+    <p class="lead">참여 대학은 <strong>가명처리된 전송본</strong>을 표준 MQTT 구독(게시·구독) 방식으로 수신합니다.
+      원본 데이터베이스에는 직접 접근하지 않으며, 전송 구간은 TLS로 암호화됩니다. (과업 요구사항 SFR-004·006)</p>
+
+    <div class="flow">
+      <span class="node">① 발주기관 구독 승인</span><span class="arrow">→</span>
+      <span class="node">② 접속 정보·인증서 수령</span><span class="arrow">→</span>
+      <span class="node">③ MQTT 구독 연결</span><span class="arrow">→</span>
+      <span class="node">④ 전송본 수신</span><span class="arrow">→</span>
+      <span class="node">⑤ 수신 확인 발행</span>
+    </div>
+
+    <h3>1. 수신 절차</h3>
+    <div class="step"><div class="n">1</div><div class="t"><strong>구독 신청·승인</strong> — 발주기관(동국대 COSS사업단)에 참여 대학·수신 범위를 신청합니다.
+      승인되면 전용 <code class="inline">client_id</code>와 <code class="inline">client_key</code>(1회 발급), 브로커 접속 정보와 CA 인증서를 받습니다.</div></div>
+    <div class="step"><div class="n">2</div><div class="t"><strong>구독 연결</strong> — 받은 계정으로 MQTT 브로커에 TLS로 접속해, 승인된 토픽을 구독합니다.</div></div>
+    <div class="step"><div class="n">3</div><div class="t"><strong>데이터 수신</strong> — 발주기관이 전송본을 발행하면, 구독한 토픽으로 가명처리된 레코드(JSON)가 전달됩니다.</div></div>
+    <div class="step"><div class="n">4</div><div class="t"><strong>수신 확인</strong> — 수신 건수를 확인 메시지로 발행하면 발주기관 대시보드의 <em>데이터 제공 실적</em>에 집계됩니다.</div></div>
+
+    <h3>2. 토픽 목록</h3>
+    <p>토픽 접두사는 <code class="inline">anbu</code> 입니다. 승인 범위에 따라 일부만 구독할 수 있습니다.</p>
+    <table>
+      <thead><tr><th>토픽</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">anbu/subjects</code></td><td>대상자(가명) — 연령대·읍면동·기능 범주 등</td></tr>
+        <tr><td><code class="inline">anbu/devices</code></td><td>장비(가명)</td></tr>
+        <tr><td><code class="inline">anbu/lighting_intervals</code></td><td>점등 구간(시작·종료·지속시간)</td></tr>
+        <tr><td><code class="inline">anbu/device_status_history</code></td><td>장비 상태 이력(정상/비활성/장애)</td></tr>
+        <tr><td><code class="inline">anbu/care_records</code></td><td>돌봄 기록(자유기술은 기본 제외)</td></tr>
+        <tr><td><code class="inline">anbu/alerts</code></td><td>이상 알림</td></tr>
+        <tr><td><code class="inline">anbu/power_usage</code></td><td>전력(AMI) 사용량 — 해당 과업 수행 시</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3. 구독 수신 방법</h3>
+    <p><strong>방법 A — 제공 예제 클라이언트</strong> (권장): 배포받은 <code class="inline">subscriber_example.py</code>로 즉시 수신·저장합니다.</p>
+    <pre>python -m anbu_api.transport.subscriber_example \
+  --host &lt;브로커주소&gt; --port 8883 --ca ca.crt \
+  --client-id &lt;발급받은 client_id&gt; \
+  --username &lt;발급받은 계정&gt; --password '&lt;비밀번호&gt;' \
+  --topics 'anbu/subjects' 'anbu/alerts'</pre>
+    <p><strong>방법 B — 표준 MQTT 클라이언트</strong>: Eclipse Paho 등 표준 라이브러리로 브로커에 TLS 접속 후 토픽을 구독합니다.
+      메시지 1건 = JSON 1개(UTF-8), 시각은 한국 표준시 <code class="inline">YYYY-MM-DD HH:MM:SS</code>.</p>
+
+    <h3>4. 수신 확인(제공 실적 집계)</h3>
+    <p>수신한 건수를 아래 둘 중 한 방식으로 알리면 발주기관 대시보드에 반영됩니다.</p>
+    <p><strong>MQTT</strong> — 토픽 <code class="inline">anbu/receipts/&lt;client_id&gt;</code> 로 발행:</p>
+    <pre>{"topic": "anbu/subjects", "record_count": 100}</pre>
+    <p><strong>REST</strong> — 인증 헤더를 포함해 호출:</p>
+    <pre>POST /api/receipts
+X-Client-Id: &lt;client_id&gt;
+X-Client-Key: &lt;client_key&gt;
+Content-Type: application/json
+
+{"topic": "anbu/subjects", "record_count": 100}</pre>
+
+    <h3>5. 보안 약정 (필수 준수)</h3>
+    <div class="callout warn">
+      전송본을 수신한 이후의 관리 책임은 참여 대학에 있습니다. 발주기관과 맺은 보안 약정에 따라 다음을 준수해야 합니다.
+      <ul>
+        <li>재식별 시도 금지</li>
+        <li>목적 외 이용 및 제3자 제공 금지</li>
+        <li>이용 기간 종료 시 파기 및 파기 결과 통보</li>
+      </ul>
+    </div>
+
+    <h3>6. 문의</h3>
+    <p class="muted">동국대학교 COSS사업단 · 구독 신청·접속 정보·CA 인증서 발급 문의</p>
+  </div>
+</section>
 </main>
 
 <script>
 const $ = (sel) => document.querySelector(sel);
 let token = sessionStorage.getItem("anbu_token");
 
+/* ---------- 탭 전환 ---------- */
+function showView(name) {
+  const ops = name === "ops";
+  $("#view-ops").classList.toggle("hidden", !ops);
+  $("#view-guide").classList.toggle("hidden", ops);
+  $("#tab-ops-btn").classList.toggle("active", ops);
+  $("#tab-guide-btn").classList.toggle("active", !ops);
+  // 운영 현황 전용 버튼은 로그인 상태 + ops 탭일 때만
+  $("#refresh").classList.toggle("hidden", !(ops && token));
+  $("#logout").classList.toggle("hidden", !(ops && token));
+  location.hash = name;
+}
+document.querySelectorAll("nav.tabs button").forEach(b =>
+  b.addEventListener("click", () => showView(b.dataset.view)));
+
+/* ---------- API ---------- */
 async function api(path) {
   const res = await fetch(path, { headers: { Authorization: "Bearer " + token } });
   if (res.status === 401) { logout(); throw new Error("세션 만료"); }
@@ -116,9 +248,9 @@ function logout() {
   sessionStorage.removeItem("anbu_token");
   token = null;
   $("#app").classList.add("hidden");
+  $("#login").classList.remove("hidden");
   $("#refresh").classList.add("hidden");
   $("#logout").classList.add("hidden");
-  $("#login").classList.remove("hidden");
   $("#who").textContent = "";
 }
 
@@ -172,7 +304,7 @@ async function render() {
   ).join("") || `<tr><td colspan="4" class="muted">기록 없음</td></tr>`;
 }
 
-async function enter() {
+async function enterApp() {
   $("#login").classList.add("hidden");
   $("#app").classList.remove("hidden");
   $("#refresh").classList.remove("hidden");
@@ -189,11 +321,17 @@ $("#login-form").addEventListener("submit", async (e) => {
   token = data.access_token;
   sessionStorage.setItem("anbu_token", token);
   $("#who").textContent = form.get("username") + " (" + data.role + ")";
-  enter();
+  await enterApp();
 });
-$("#logout").addEventListener("click", logout);
+$("#logout").addEventListener("click", () => { logout(); showView("ops"); });
 $("#refresh").addEventListener("click", render);
-if (token) enter();
+
+/* ---------- 초기 화면 ---------- */
+(async () => {
+  if (token) { try { await enterApp(); } catch (e) {} }
+  const initial = location.hash === "#guide" ? "guide" : "ops";
+  showView(initial);
+})();
 </script>
 </body>
 </html>

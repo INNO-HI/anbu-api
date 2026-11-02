@@ -1,0 +1,17 @@
+[Unit]
+Description=anbu-api (제주 안부똑똑 데이터 관리·전송 체계) — uvicorn
+After=network.target
+
+[Service]
+Type=simple
+User=inno-hi
+WorkingDirectory=/home/inno-hi/anbu-api
+EnvironmentFile=/home/inno-hi/anbu-api/.env
+# 127.0.0.1에만 바인딩 — 외부 노출은 nginx(TLS)만 담당.
+# 포트 8201: 이 공용 서버에서 8000은 docker-proxy가 점유 중이라 충돌 회피.
+ExecStart=/home/inno-hi/anbu-api/.venv/bin/uvicorn anbu_api.api.main:app --host 127.0.0.1 --port 8201
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
